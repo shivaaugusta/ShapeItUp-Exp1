@@ -60,7 +60,7 @@ fig, ax = plt.subplots()
 for i in range(N):
     for x, y in zip(x_data[i], y_data[i]):
         path = os.path.join(SHAPE_FOLDER, chosen_shapes[i])
-        img = Image.open(path).convert("RGBA").resize((20, 20))
+        img = Image.open(path).convert("RGBA").resize((10, 10))
         im = OffsetImage(img, zoom=1.0)
         ab = AnnotationBbox(im, (x, y), frameon=False)
         ax.add_artist(ab)
