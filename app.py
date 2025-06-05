@@ -1,4 +1,4 @@
-# --- Streamlit App for ShapeItUp - Eksperimen 1 (Fixed Auto-Rerun) ---
+# --- Streamlit App for ShapeItUp - Eksperimen 1 (Final: Latihan Ketat, Eksperimen Fleksibel) ---
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,25 +34,27 @@ if len(SHAPE_POOL) == 0:
 # --- Inisialisasi session state ---
 if "task_index" not in st.session_state:
     st.session_state.task_index = 0
-    st.session_state.total_tasks = 53
+    st.session_state.total_tasks = 53  # 3 latihan + 50 eksperimen
     st.session_state.correct = 0
     st.session_state.mode = "latihan"
 
-st.title("🧠 Eksperimen 1: Pilih Kategori dengan Rata-rata Y Tertinggi")
-
+# Tentukan mode
 if st.session_state.task_index < 3:
+    st.session_state.mode = "latihan"
     st.subheader(f"Latihan #{st.session_state.task_index + 1}")
 else:
-    if st.session_state.task_index == 3:
-        st.session_state.mode = "eksperimen"
+    st.session_state.mode = "eksperimen"
     st.subheader(f"Eksperimen #{st.session_state.task_index - 2} dari 50")
+
+st.title("🧠 Eksperimen 1: Pilih Kategori dengan Rata-rata Y Tertinggi")
 
 # --- Setup eksperimen hanya saat pertama kali ---
 index = st.session_state.task_index
 
 if f"x_data_{index}" not in st.session_state:
     shape_types = ["filled", "unfilled", "open"]
-    selected_type = random.choice(shape_types)
+    # urutkan agar tiap mode digunakan merata (filled, unfilled, open, repeat)
+    selected_type = shape_types[index % len(shape_types)]
     selected_pool = SHAPE_CATEGORIES[selected_type]
 
     if len(selected_pool) < 3:
@@ -97,7 +99,7 @@ ax.set_xlabel("X")
 ax.set_ylabel("Y")
 st.pyplot(fig)
 
-# --- Input jawaban peserta dengan label bentuk ---
+# --- Input jawaban peserta ---
 selected_label = st.selectbox("📍 Pilih kategori dengan rata-rata Y tertinggi:", shape_labels)
 selected_index = shape_labels.index(selected_label)
 
@@ -113,24 +115,29 @@ if st.button("🚀 Submit Jawaban"):
     else:
         st.error(f"❌ Jawaban salah. Jawaban benar: {shape_labels[true_idx]}.")
 
-    if mode == "latihan" and not benar:
-        st.warning("Latihan harus benar untuk lanjut.")
-        st.stop()
-
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    response = [
-        timestamp, mode, index + 1, len(x_data),
-        selected_label, shape_labels[true_idx], "Benar" if benar else "Salah",
-        ", ".join(chosen_shapes), selected_type
-    ]
-    try:
-        worksheet.append_row(response)
-    except Exception as e:
-        st.error(f"Gagal menyimpan ke Google Sheets: {e}")
+
+    # Simpan jawaban hanya untuk eksperimen (50 soal)
+    if mode == "eksperimen":
+        response = [
+            timestamp, mode, index + 1, len(x_data),
+            selected_label, shape_labels[true_idx], "Benar" if benar else "Salah",
+            ", ".join(chosen_shapes), selected_type
+        ]
+        try:
+            worksheet.append_row(response)
+        except Exception as e:
+            st.error(f"Gagal menyimpan ke Google Sheets: {e}")
+
+    # Untuk latihan: hanya lanjut jika benar
+    if mode == "latihan" and not benar:
+        st.warning("Latihan harus dijawab benar untuk lanjut.")
+        st.stop()
 
     st.session_state.task_index += 1
     st.experimental_rerun()
 
+# --- Akhiran ---
 if st.session_state.task_index >= st.session_state.total_tasks:
     st.success(f"🎉 Eksperimen selesai! Skor akhir Anda: {st.session_state.correct} dari 50.")
     st.balloons()
