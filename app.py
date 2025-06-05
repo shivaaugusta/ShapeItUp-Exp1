@@ -15,7 +15,7 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 creds = Credentials.from_service_account_info(st.secrets["google_sheets"], scopes=scope)
 client = gspread.authorize(creds)
 spreadsheet = client.open_by_key("1aZ0LjvdZs1WHGphqb_nYrvPma8xEG9mxfM-O1_fsi3g")
-worksheet = spreadsheet.worksheet("Eksperimen1")  # sheet khusus untuk eksperimen 1
+worksheet = spreadsheet.worksheet("Eksperimen_1")  # sheet khusus untuk eksperimen 1
 
 # --- Konfigurasi Shape Pool ---
 SHAPE_FOLDER = "shapes"
