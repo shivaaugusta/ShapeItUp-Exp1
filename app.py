@@ -1,4 +1,4 @@
-# --- Streamlit App for ShapeItUp - Eksperimen 1 (Final: Latihan Ketat, Eksperimen Fleksibel) ---
+# --- Streamlit App for ShapeItUp - Eksperimen 1 ---
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
