@@ -1,0 +1,3 @@
+# Hindari upload credential penting
+credentials.json
+__pycache__/
