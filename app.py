@@ -1,4 +1,4 @@
-# --- Streamlit App for ShapeItUp - Eksperimen 1 (Cleaned Legend) ---
+# --- Streamlit App for ShapeItUp - Eksperimen 1 (Fixed Static Tasks) ---
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
@@ -47,31 +47,43 @@ else:
         st.session_state.mode = "eksperimen"
     st.subheader(f"Eksperimen #{st.session_state.task_index - 2} dari 50")
 
-# --- Pilih satu jenis shape: filled/unfilled/open ---
-shape_types = ["filled", "unfilled", "open"]
-selected_type = random.choice(shape_types)
-selected_pool = SHAPE_CATEGORIES[selected_type]
+# --- Setup eksperimen hanya saat pertama kali ---
+index = st.session_state.task_index
 
-if len(selected_pool) < 3:
-    st.error(f"❌ Tidak cukup shape untuk tipe: {selected_type}. Cek folder shapes.")
-    st.stop()
+if f"x_data_{index}" not in st.session_state:
+    shape_types = ["filled", "unfilled", "open"]
+    selected_type = random.choice(shape_types)
+    selected_pool = SHAPE_CATEGORIES[selected_type]
 
-N = random.choice(range(2, min(9, len(selected_pool))))
-chosen_shapes = random.sample(selected_pool, N)
+    if len(selected_pool) < 3:
+        st.error(f"❌ Tidak cukup shape untuk tipe: {selected_type}. Cek folder shapes.")
+        st.stop()
 
-# --- Buat data koordinat ---
-means = np.random.uniform(0.2, 1.0, N)
-target_idx = random.randint(0, N - 1)
-means[target_idx] += 0.25
-y_data = [np.random.normal(loc=m, scale=0.05, size=20) for m in means]
-x_data = [np.random.uniform(0.0, 1.5, 20) for _ in range(N)]
+    N = random.choice(range(2, min(9, len(selected_pool))))
+    chosen_shapes = random.sample(selected_pool, N)
+    means = np.random.uniform(0.2, 1.0, N)
+    target_idx = random.randint(0, N - 1)
+    means[target_idx] += 0.25
+    y_data = [np.random.normal(loc=m, scale=0.05, size=20) for m in means]
+    x_data = [np.random.uniform(0.0, 1.5, 20) for _ in range(N)]
+    shape_labels = [s.replace(".png", "").replace("-", " ").replace("_", " ").title() for s in chosen_shapes]
 
-# --- Label bentuk sebagai nama kategori ---
-shape_labels = [s.replace(".png", "").replace("-", " ").replace("_", " ").title() for s in chosen_shapes]
+    st.session_state[f"x_data_{index}"] = x_data
+    st.session_state[f"y_data_{index}"] = y_data
+    st.session_state[f"chosen_shapes_{index}"] = chosen_shapes
+    st.session_state[f"shape_labels_{index}"] = shape_labels
+    st.session_state[f"selected_type_{index}"] = selected_type
+
+# --- Ambil data dari session state ---
+x_data = st.session_state[f"x_data_{index}"]
+y_data = st.session_state[f"y_data_{index}"]
+chosen_shapes = st.session_state[f"chosen_shapes_{index}"]
+shape_labels = st.session_state[f"shape_labels_{index}"]
+selected_type = st.session_state[f"selected_type_{index}"]
 
 # --- Plot scatter tanpa legend ---
 fig, ax = plt.subplots()
-for i in range(N):
+for i in range(len(x_data)):
     for x, y in zip(x_data[i], y_data[i]):
         path = os.path.join(SHAPE_FOLDER, chosen_shapes[i])
         img = Image.open(path).convert("RGBA").resize((15, 15))
@@ -107,7 +119,7 @@ if st.button("🚀 Submit Jawaban"):
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     response = [
-        timestamp, mode, st.session_state.task_index + 1, N,
+        timestamp, mode, index + 1, len(x_data),
         selected_label, shape_labels[true_idx], "Benar" if benar else "Salah",
         ", ".join(chosen_shapes), selected_type
     ]
