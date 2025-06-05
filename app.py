@@ -1,4 +1,4 @@
-# --- Streamlit App for ShapeItUp - Eksperimen 1 (Shape Legend Fix) ---
+# --- Streamlit App for ShapeItUp - Eksperimen 1 (Legend with Shape Icons) ---
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,7 +15,7 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 creds = Credentials.from_service_account_info(st.secrets["google_sheets"], scopes=scope)
 client = gspread.authorize(creds)
 spreadsheet = client.open_by_key("1aZ0LjvdZs1WHGphqb_nYrvPma8xEG9mxfM-O1_fsi3g")
-worksheet = spreadsheet.worksheet("Eksperimen_1")  # sheet khusus untuk eksperimen 1
+worksheet = spreadsheet.worksheet("Eksperimen_1")
 
 # --- Konfigurasi Shape Pool ---
 SHAPE_FOLDER = "shapes"
@@ -27,7 +27,6 @@ SHAPE_CATEGORIES = {
     "open": [s for s in SHAPE_POOL if "dash" in s or "open" in s],
 }
 
-# Debug jika pool kosong
 if len(SHAPE_POOL) == 0:
     st.error("❌ Folder 'shapes' kosong atau tidak ditemukan.")
     st.stop()
@@ -60,15 +59,19 @@ if len(selected_pool) < 3:
 N = random.choice(range(2, min(9, len(selected_pool))))
 chosen_shapes = random.sample(selected_pool, N)
 
-# --- Buat data koordinat dengan satu kategori dominan ---
+# --- Buat data koordinat ---
 means = np.random.uniform(0.2, 1.0, N)
 target_idx = random.randint(0, N - 1)
 means[target_idx] += 0.25
 y_data = [np.random.normal(loc=m, scale=0.05, size=20) for m in means]
 x_data = [np.random.uniform(0.0, 1.5, 20) for _ in range(N)]
 
-# --- Plot scatter dengan label sesuai bentuk ---
+# --- Label bentuk sebagai nama kategori ---
+shape_labels = [s.replace(".png", "").replace("-", " ").replace("_", " ").title() for s in chosen_shapes]
+
+# --- Plot scatter dengan ikon bentuk sebagai legenda ---
 fig, ax = plt.subplots()
+legend_handles = []
 for i in range(N):
     for x, y in zip(x_data[i], y_data[i]):
         path = os.path.join(SHAPE_FOLDER, chosen_shapes[i])
@@ -76,32 +79,32 @@ for i in range(N):
         im = OffsetImage(img, zoom=1.0)
         ab = AnnotationBbox(im, (x, y), frameon=False)
         ax.add_artist(ab)
-    label = chosen_shapes[i].replace(".png", "").replace("-", " ").replace("_", " ").title()
-    ax.scatter([], [], label=label)
+    # Dummy scatter (tidak tampak) hanya untuk anchor legenda
+    dummy = ax.scatter([], [], alpha=0)
+    legend_handles.append((dummy, shape_labels[i]))
 
 ax.set_xlim(-0.1, 1.6)
 ax.set_ylim(-0.1, 1.6)
 ax.set_xlabel("X")
 ax.set_ylabel("Y")
-ax.legend()
+ax.legend([h for h, _ in legend_handles], [l for _, l in legend_handles])
 st.pyplot(fig)
 
-# --- Input jawaban peserta ---
-selected = st.selectbox("📍 Pilih kategori dengan rata-rata Y tertinggi:",
-                        [f"Kategori {i+1}" for i in range(N)])
+# --- Input jawaban peserta dengan label bentuk ---
+selected_label = st.selectbox("📍 Pilih kategori dengan rata-rata Y tertinggi:", shape_labels)
+selected_index = shape_labels.index(selected_label)
 
 # --- Submit ---
 if st.button("🚀 Submit Jawaban"):
-    true_idx = int(np.argmax([np.mean(y) for y in y_data])) + 1
-    user_idx = int(selected.split(" ")[1])
-    benar = user_idx == true_idx
+    true_idx = int(np.argmax([np.mean(y) for y in y_data]))
+    benar = selected_index == true_idx
     mode = st.session_state.mode
 
     if benar:
         st.session_state.correct += 1
-        st.success(f"✅ Jawaban benar! Kategori {true_idx} memiliki Y tertinggi.")
+        st.success(f"✅ Jawaban benar! {shape_labels[true_idx]} memiliki Y tertinggi.")
     else:
-        st.error(f"❌ Jawaban salah. Jawaban benar: Kategori {true_idx}.")
+        st.error(f"❌ Jawaban salah. Jawaban benar: {shape_labels[true_idx]}.")
 
     if mode == "latihan" and not benar:
         st.warning("Latihan harus benar untuk lanjut.")
@@ -110,7 +113,7 @@ if st.button("🚀 Submit Jawaban"):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     response = [
         timestamp, mode, st.session_state.task_index + 1, N,
-        selected, f"Kategori {true_idx}", "Benar" if benar else "Salah",
+        selected_label, shape_labels[true_idx], "Benar" if benar else "Salah",
         ", ".join(chosen_shapes), selected_type
     ]
     try:
