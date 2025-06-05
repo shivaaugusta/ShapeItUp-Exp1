@@ -1,4 +1,4 @@
-# --- Streamlit App for ShapeItUp - Eksperimen 1 (Final: Latihan Ketat, Eksperimen Fleksibel) ---
+# --- Streamlit App for ShapeItUp - Eksperimen 1 (Final Fix: Prevent Infinite Rerun) ---
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,9 +34,14 @@ if len(SHAPE_POOL) == 0:
 # --- Inisialisasi session state ---
 if "task_index" not in st.session_state:
     st.session_state.task_index = 0
-    st.session_state.total_tasks = 53  # 3 latihan + 50 eksperimen
+    st.session_state.total_tasks = 53
     st.session_state.correct = 0
     st.session_state.mode = "latihan"
+
+# Reset submission flag saat ganti task
+if "last_task_index" not in st.session_state or st.session_state.task_index != st.session_state.last_task_index:
+    st.session_state.already_submitted = False
+    st.session_state.last_task_index = st.session_state.task_index
 
 # Tentukan mode
 if st.session_state.task_index < 3:
@@ -53,7 +58,6 @@ index = st.session_state.task_index
 
 if f"x_data_{index}" not in st.session_state:
     shape_types = ["filled", "unfilled", "open"]
-    # urutkan agar tiap mode digunakan merata (filled, unfilled, open, repeat)
     selected_type = shape_types[index % len(shape_types)]
     selected_pool = SHAPE_CATEGORIES[selected_type]
 
@@ -104,7 +108,7 @@ selected_label = st.selectbox("📍 Pilih kategori dengan rata-rata Y tertinggi:
 selected_index = shape_labels.index(selected_label)
 
 # --- Submit ---
-if st.button("🚀 Submit Jawaban"):
+if not st.session_state.already_submitted and st.button("🚀 Submit Jawaban"):
     true_idx = int(np.argmax([np.mean(y) for y in y_data]))
     benar = selected_index == true_idx
     mode = st.session_state.mode
@@ -117,7 +121,6 @@ if st.button("🚀 Submit Jawaban"):
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Simpan jawaban hanya untuk eksperimen (50 soal)
     if mode == "eksperimen":
         response = [
             timestamp, mode, index + 1, len(x_data),
@@ -129,18 +132,16 @@ if st.button("🚀 Submit Jawaban"):
         except Exception as e:
             st.error(f"Gagal menyimpan ke Google Sheets: {e}")
 
-    # Untuk latihan: hanya lanjut jika benar
     if mode == "latihan" and not benar:
         st.warning("Latihan harus dijawab benar untuk lanjut.")
         st.stop()
 
+    st.session_state.already_submitted = True
     st.session_state.task_index += 1
-
-# Rerun untuk semua versi Streamlit
-try:
-    st.rerun()
-except AttributeError:
-    st.experimental_rerun()
+    try:
+        st.rerun()
+    except AttributeError:
+        st.experimental_rerun()
 
 # --- Akhiran ---
 if st.session_state.task_index >= st.session_state.total_tasks:
