@@ -1,4 +1,4 @@
-# --- Streamlit App for ShapeItUp - Eksperimen 1 ---
+# --- Streamlit App for ShapeItUp - Eksperimen 1 (Final: Latihan Ketat, Eksperimen Fleksibel) ---
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
@@ -135,10 +135,12 @@ if st.button("🚀 Submit Jawaban"):
         st.stop()
 
     st.session_state.task_index += 1
-    try:
-        st.rerun()
-    except AttributeError:
-        st.experimental_rerun()
+
+# Rerun untuk semua versi Streamlit
+try:
+    st.rerun()
+except AttributeError:
+    st.experimental_rerun()
 
 # --- Akhiran ---
 if st.session_state.task_index >= st.session_state.total_tasks:
