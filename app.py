@@ -1,4 +1,4 @@
-# --- Streamlit App for ShapeItUp - Eksperimen 1 (Legend with Shape Icons) ---
+# --- Streamlit App for ShapeItUp - Eksperimen 1 (Cleaned Legend) ---
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
@@ -69,25 +69,20 @@ x_data = [np.random.uniform(0.0, 1.5, 20) for _ in range(N)]
 # --- Label bentuk sebagai nama kategori ---
 shape_labels = [s.replace(".png", "").replace("-", " ").replace("_", " ").title() for s in chosen_shapes]
 
-# --- Plot scatter dengan ikon bentuk sebagai legenda ---
+# --- Plot scatter tanpa legend ---
 fig, ax = plt.subplots()
-legend_handles = []
 for i in range(N):
     for x, y in zip(x_data[i], y_data[i]):
         path = os.path.join(SHAPE_FOLDER, chosen_shapes[i])
-        img = Image.open(path).convert("RGBA").resize((20, 20))
+        img = Image.open(path).convert("RGBA").resize((15, 15))
         im = OffsetImage(img, zoom=1.0)
         ab = AnnotationBbox(im, (x, y), frameon=False)
         ax.add_artist(ab)
-    # Dummy scatter (tidak tampak) hanya untuk anchor legenda
-    dummy = ax.scatter([], [], alpha=0)
-    legend_handles.append((dummy, shape_labels[i]))
 
 ax.set_xlim(-0.1, 1.6)
 ax.set_ylim(-0.1, 1.6)
 ax.set_xlabel("X")
 ax.set_ylabel("Y")
-ax.legend([h for h, _ in legend_handles], [l for _, l in legend_handles])
 st.pyplot(fig)
 
 # --- Input jawaban peserta dengan label bentuk ---
