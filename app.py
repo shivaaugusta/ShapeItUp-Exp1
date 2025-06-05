@@ -135,7 +135,10 @@ if st.button("🚀 Submit Jawaban"):
         st.stop()
 
     st.session_state.task_index += 1
-    st.experimental_rerun()
+    try:
+        st.rerun()
+    except AttributeError:
+        st.experimental_rerun()
 
 # --- Akhiran ---
 if st.session_state.task_index >= st.session_state.total_tasks:
