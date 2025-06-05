@@ -1,4 +1,4 @@
-# --- Streamlit App for ShapeItUp - Eksperimen 1 (Fixed Static Tasks) ---
+# --- Streamlit App for ShapeItUp - Eksperimen 1 (Fixed Auto-Rerun) ---
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
@@ -129,6 +129,7 @@ if st.button("🚀 Submit Jawaban"):
         st.error(f"Gagal menyimpan ke Google Sheets: {e}")
 
     st.session_state.task_index += 1
+    st.experimental_rerun()
 
 if st.session_state.task_index >= st.session_state.total_tasks:
     st.success(f"🎉 Eksperimen selesai! Skor akhir Anda: {st.session_state.correct} dari 50.")
